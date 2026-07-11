@@ -86,14 +86,14 @@ describe AsciidoctorPDF::UserConfig do
       end
     end
 
-    it "lit `open: true` (ouverture auto du PDF généré)" do
-      cfg = AsciidoctorPDF::UserConfig.from_yaml("open: true")
-      cfg.open.should be_true
+    it "lit `open:` (true / false) pour piloter l'ouverture auto" do
+      AsciidoctorPDF::UserConfig.from_yaml("open: true").open.should be_true
+      AsciidoctorPDF::UserConfig.from_yaml("open: false").open.should be_false
     end
 
-    it "`open` vaut false par défaut (config sans la clé)" do
-      AsciidoctorPDF::UserConfig.empty.open.should be_false
-      AsciidoctorPDF::UserConfig.from_yaml("theme: fr").open.should be_false
+    it "`open` vaut nil quand la clé est absente (⇒ ouverture par défaut)" do
+      AsciidoctorPDF::UserConfig.empty.open.should be_nil
+      AsciidoctorPDF::UserConfig.from_yaml("theme: fr").open.should be_nil
     end
 
     it "tolère un YAML cassé en retournant une config vide" do

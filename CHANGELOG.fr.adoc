@@ -1,3 +1,25 @@
+== v2.3.24.107 — 2026-07-04
+
+=== Changé / Corrigé (ouverture par défaut + robustesse CLI)
+
+* **L'ouverture du PDF est désormais SYSTÉMATIQUE par défaut** — elle
+  était opt-in via `-O`/`--open` en 2.3.24.106. Le flag `-O`/`--open`
+  disparaît ; à la place :
++
+  - `-n` / `--no-open` désactive l'ouverture pour un run (prioritaire) ;
+  - `open: false` dans `config.yml` la désactive de façon persistante
+    (utile en CI / poste sans interface). Le champ `open` passe de
+    booléen défaut-`false` à tri-état : absent ⇒ ouvrir, `true` ⇒
+    ouvrir, `false` ⇒ ne pas ouvrir. Priorité : `-n` > config > défaut.
+
+* **Erreur d'option propre au lieu d'une stack trace.** `-o` sans son
+  argument (ou une option inconnue) faisait planter la CLI avec une
+  trace Crystal brute (`OptionParser::MissingOption` /
+  `InvalidOption`). On affiche un message clair + un renvoi vers
+  `--help`, et on sort en code 1.
++
+  2 specs unitaires (config `open` tri-état).
+
 == v2.3.24.106 — 2026-07-04
 
 === Ajouté (ouverture du PDF après génération)

@@ -15,32 +15,45 @@ output_file = ""
 theme_file = ""
 sample_mode = false
 no_user_config = false
-open_after = false
+no_open = false
 attributes = {} of String => String
 
-OptionParser.parse do |parser|
-  parser.banner = "Usage : crystal-asciidoctor-pdf [options] fichier.adoc [fichier2.adoc …]"
-  parser.on("-o FILE", "--out-file FILE", "Fichier de sortie PDF (par défaut : fichier.adoc.pdf)") { |f| output_file = f }
-  parser.on("-T NAME", "--theme NAME", "Thème : nom embarqué (#{AsciidoctorPDF::ThemeLoader.builtin_names.join(", ")}) ou chemin YAML") { |f| theme_file = f }
-  parser.on("-a ATTR", "--attribute ATTR", "Attribut nom=valeur") do |a|
-    parts = a.split("=", 2)
-    attributes[parts[0]] = parts.size > 1 ? parts[1] : ""
+# Le parsing peut lever `MissingOption` (option à argument sans son
+# argument, p. ex. `-o` seul) ou `InvalidOption` (option inconnue). Sans
+# ce rescue, la CLI plantait avec une stack trace brute ; on affiche à
+# la place un message clair + un renvoi vers l'aide, et on sort en 1.
+begin
+  OptionParser.parse do |parser|
+    parser.banner = "Usage : crystal-asciidoctor-pdf [options] fichier.adoc [fichier2.adoc …]"
+    parser.on("-o FILE", "--out-file FILE", "Fichier de sortie PDF (par défaut : fichier.adoc.pdf)") { |f| output_file = f }
+    parser.on("-T NAME", "--theme NAME", "Thème : nom embarqué (#{AsciidoctorPDF::ThemeLoader.builtin_names.join(", ")}) ou chemin YAML") { |f| theme_file = f }
+    parser.on("-a ATTR", "--attribute ATTR", "Attribut nom=valeur") do |a|
+      parts = a.split("=", 2)
+      attributes[parts[0]] = parts.size > 1 ? parts[1] : ""
+    end
+    parser.on("-N", "--no-user-config", "Ignorer la configuration utilisateur (#{AsciidoctorPDF::UserConfig.expected_dir}/config.yml)") { no_user_config = true }
+    parser.on("-n", "--no-open", "Ne PAS ouvrir le PDF (l'ouverture est faite par défaut ; macOS : Aperçu)") { no_open = true }
+    parser.on("--sample", "Générer le document de référence (reference.adoc + PDF)") { sample_mode = true }
+    parser.on("-h", "--help", "Afficher l'aide") { puts parser; exit 0 }
+    parser.on("-v", "--version", "Afficher la version") { puts "crystal-asciidoctor-pdf #{AsciidoctorPDF::VERSION}"; exit 0 }
+    parser.unknown_args { |args| input_files = args }
   end
-  parser.on("-N", "--no-user-config", "Ignorer la configuration utilisateur (#{AsciidoctorPDF::UserConfig.expected_dir}/config.yml)") { no_user_config = true }
-  parser.on("-O", "--open", "Ouvrir le PDF généré dans le lecteur par défaut (macOS : Aperçu)") { open_after = true }
-  parser.on("--sample", "Générer le document de référence (reference.adoc + PDF)") { sample_mode = true }
-  parser.on("-h", "--help", "Afficher l'aide") { puts parser; exit 0 }
-  parser.on("-v", "--version", "Afficher la version") { puts "crystal-asciidoctor-pdf #{AsciidoctorPDF::VERSION}"; exit 0 }
-  parser.unknown_args { |args| input_files = args }
+rescue ex : OptionParser::MissingOption | OptionParser::InvalidOption
+  STDERR.puts "Erreur : #{ex.message}"
+  STDERR.puts "Usage : crystal-asciidoctor-pdf [options] fichier.adoc [fichier2.adoc …]"
+  STDERR.puts "Aide  : crystal-asciidoctor-pdf --help"
+  exit 1
 end
 
 # Chargement de la configuration utilisateur (XDG).
 # Court-circuité par `--no-user-config`.
 user_config = no_user_config ? AsciidoctorPDF::UserConfig.empty : AsciidoctorPDF::UserConfig.load
 
-# L'ouverture auto peut être demandée par le flag `-O`/`--open` OU par
-# `open: true` dans la config utilisateur (additif : l'un suffit).
-open_after ||= user_config.open
+# Ouverture du PDF : SYSTÉMATIQUE par défaut. Désactivable pour un run
+# via `-n`/`--no-open` (prioritaire), ou de façon persistante via
+# `open: false` dans la config utilisateur. `user_config.open` vaut
+# `nil` (clé absente ⇒ défaut = ouvrir), `true` ou `false`.
+open_after = no_open ? false : (user_config.open != false)
 
 if sample_mode
   # Le fichier de référence est dans crystal-asciidoctor (le shard cœur)

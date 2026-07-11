@@ -3,6 +3,26 @@
 :toc-title: Versions
 :toclevels: 2
 
+== v2.3.24.107 — 2026-07-04
+
+=== Changed / Fixed (open by default + CLI robustness)
+
+* **The PDF now opens by default, systematically** — it was opt-in via
+  `-O`/`--open` in 2.3.24.106. The `-O`/`--open` flag is gone; instead:
++
+  - `-n` / `--no-open` disables opening for a run (wins);
+  - `open: false` in `config.yml` disables it persistently (handy for
+    CI / headless machines). The `open` field goes from a
+    default-`false` boolean to tri-state: absent ⇒ open, `true` ⇒ open,
+    `false` ⇒ don't open. Precedence: `-n` > config > default.
+
+* **Clean option error instead of a stack trace.** `-o` without its
+  argument (or an unknown option) crashed the CLI with a raw Crystal
+  trace (`OptionParser::MissingOption` / `InvalidOption`). It now prints
+  a clear message + a pointer to `--help`, and exits with code 1.
++
+  2 unit specs (tri-state config `open`).
+
 == v2.3.24.106 — 2026-07-04
 
 === Added (open the PDF after generation)

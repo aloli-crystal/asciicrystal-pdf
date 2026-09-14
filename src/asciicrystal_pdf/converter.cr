@@ -3545,9 +3545,11 @@ module AsciicrystalPDF
     # accepté (pas d'options ⇒ défauts : centré, largeur 200pt).
     #
     # `y_top` est l'ordonnée du **haut** de l'image (repère PDF, origine
-    # en bas-gauche — `page.svg` / `page.image` traitent y comme le
-    # bord supérieur). Retourne la hauteur effectivement consommée par
-    # le logo, ou 0.0 si rien n'a été dessiné.
+    # en bas-gauche). Attention aux deux conventions d'ancrage des
+    # primitives : `page.svg` prend y comme bord SUPÉRIEUR, `page.image`
+    # comme bord INFÉRIEUR — d'où le `y_top - logo_h` du chemin bitmap.
+    # Retourne la hauteur effectivement consommée par le logo, ou 0.0
+    # si rien n'a été dessiné.
     private def render_title_logo(
       doc : Asciicrystal::Document, page : PDF::Page, y_top : Float64,
     ) : Float64
@@ -3586,7 +3588,13 @@ module AsciicrystalPDF
           ratio = pdfwidth / img.width.to_f
           logo_h = img.height.to_f * ratio
           logo_x = align_logo_x(align, pdfwidth)
-          page.image(img, at: {logo_x, y_top}, width: pdfwidth)
+          # `page.image` ancre l'image par son coin INFÉRIEUR gauche
+          # (convention PDF : la matrice `cm` translate en y du bas),
+          # alors que `page.svg` ancre par le HAUT. Sans la soustraction
+          # de `logo_h`, un logo bitmap était dessiné au-dessus de
+          # `y_top` : il empiétait sur la marge et, en tête de page, il
+          # était tronqué par le bord supérieur de la feuille.
+          page.image(img, at: {logo_x, y_top - logo_h}, width: pdfwidth)
           logo_h
         end
       rescue

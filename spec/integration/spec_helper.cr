@@ -128,6 +128,32 @@ module IntegrationHelper
     buf.to_s
   end
 
+  # Returns the image placements of the document, as
+  # `{width, height, x, y}` in PDF points — one entry per `Do`
+  # operator preceded by its scaling/translating `cm` matrix.
+  #
+  # PDF anchors an XObject by its LOWER-LEFT corner, so `y` is the
+  # BOTTOM of the drawn image and `y + height` its top. That is what
+  # lets a spec assert an image stays inside the page.
+  def self.image_placements(pdf_path : String) : Array(Tuple(Float64, Float64, Float64, Float64))
+    reader = PDF::Reader.open(pdf_path)
+    out = [] of Tuple(Float64, Float64, Float64, Float64)
+    pattern = /([\d.]+) 0 0 ([\d.]+) (-?[\d.]+) (-?[\d.]+) cm\s*\/[A-Za-z0-9_]+ Do/
+
+    (0...reader.page_count).each do |i|
+      reader.pages[i].content_streams.each do |bytes|
+        decoded = inflate_if_needed(bytes)
+        # Le flux de contenu est de l'ASCII (les octets de l'image
+        # vivent dans un XObject séparé) : la conversion est sûre.
+        String.new(decoded).scan(pattern) do |m|
+          out << {m[1].to_f, m[2].to_f, m[3].to_f, m[4].to_f}
+        end
+      end
+    end
+
+    out
+  end
+
   # Counts the number of `/Subtype /Link` annotations in the raw PDF
   # bytes. This is the cheapest, most font-agnostic way to assert that
   # the TOC entries are clickable: every entry should produce one link

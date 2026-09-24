@@ -3,6 +3,16 @@
 :toc-title: Versions
 :toclevels: 2
 
+== Unreleased
+
+=== Fixed
+
+* **Xref without label** (`<<pilotage>>`): shows the target section title, as Asciidoctor does, instead of its id ("voir pilotage"); fixed in `asciicrystal` 2.0.26.19. An unknown target shows `[id]`.
+
+=== Changed
+
+* Dependency raised: `asciicrystal` ~> 2.0.26.19.
+
 == v2.3.24.110 — 2026-09-24
 
 === Added

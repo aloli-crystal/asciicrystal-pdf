@@ -6,7 +6,7 @@ shards:
 
   asciicrystal:
     git: https://github.com/aloli-crystal/asciicrystal.git
-    version: 2.0.26.18
+    version: 2.0.26.19
 
   country-flags:
     git: https://github.com/aloli-crystal/country-flags.git

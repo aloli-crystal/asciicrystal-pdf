@@ -1,3 +1,13 @@
+== Non publié
+
+=== Corrigé
+
+* **Renvoi sans libellé** (`<<pilotage>>`) : affiche le titre de la section ciblée, comme Asciidoctor, et non son identifiant (« voir pilotage ») ; corrigé dans `asciicrystal` 2.0.26.19. Une cible inconnue s'affiche `[id]`.
+
+=== Modifié
+
+* Dépendance relevée : `asciicrystal` ~> 2.0.26.19.
+
 == v2.3.24.110 — 2026-09-24
 
 === Ajouté

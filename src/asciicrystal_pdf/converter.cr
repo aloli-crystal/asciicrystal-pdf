@@ -96,6 +96,9 @@ module AsciicrystalPDF
     # `Hyphenation::Loader.for(@document_lang)`. `nil` = pas de
     # césure (le composer émet des Box monolithiques).
     @document_lang : String? = nil
+    # Titre du sommaire tel que demandé par le document
+    # (`:toc-title:`), qui prime sur le libellé du thème.
+    @document_toc_title : String? = nil
     @index_entries : Array(IndexEntry) = [] of IndexEntry
     # Entrées de la table des matières.
     # Chaque entrée capture {titre, niveau, page (1-based), nom de destination
@@ -277,6 +280,23 @@ module AsciicrystalPDF
       # (composition sans césure, comportement gracieux).
       lang_attr = node.attr?("lang") ? node.attr("lang").to_s.strip : ""
       @document_lang = lang_attr.empty? ? nil : lang_attr
+
+      # `:toc-title:` — attribut AsciiDoc standard. Sans lui, le
+      # libellé vient du thème, dont le défaut est français : un
+      # document rédigé dans une autre langue héritait d'un
+      # « Table des matières » incongru.
+      #
+      # `attr?` ne suffit PAS ici : asciicrystal fournit un défaut
+      # intégré (« Table of Contents », cf. constants.cr), si bien que
+      # l'attribut est toujours présent. On ne retient donc sa valeur
+      # que si le DOCUMENT l'a effectivement définie — sinon tous les
+      # documents français basculeraient sur le défaut anglais du
+      # parser au lieu du libellé du thème.
+      if (as_doc = node.as?(Asciicrystal::Document)) &&
+         as_doc.@attributes_modified.includes?("toc-title")
+        toc_title_attr = as_doc.attr("toc-title").to_s.strip
+        @document_toc_title = toc_title_attr.empty? ? nil : toc_title_attr
+      end
 
       # Résolution per-document du thème : si l'utilisateur n'a pas
       # passé de thème explicite au constructeur, on lit l'attribut
@@ -3131,7 +3151,7 @@ module AsciicrystalPDF
         toc_title_size = font_size + 6.0
         set_font(page, @fn_body_bold, toc_title_size)
         page.fill_color(@theme.heading_font_color)
-        page.text(@theme.toc_title, at: {@margin, y - toc_title_size})
+        page.text(resolve_toc_title, at: {@margin, y - toc_title_size})
         y -= toc_title_size * 2.0
       end
 
@@ -3343,6 +3363,12 @@ module AsciicrystalPDF
         else               "left"
         end
       end
+    end
+
+    # Libellé du sommaire : `:toc-title:` du document s'il est
+    # défini, sinon celui du thème.
+    private def resolve_toc_title : String
+      @document_toc_title || @theme.toc_title
     end
 
     # Calcule la position x d'une ligne de titre selon l'alignement.
@@ -3586,7 +3612,7 @@ module AsciicrystalPDF
       toc_title_size = @theme.toc_font_size + 4.0
       set_font(page, @fn_body_bold, toc_title_size)
       page.fill_color(@theme.heading_font_color)
-      draw_text_run(page, @theme.toc_title, @margin, cursor_y - toc_title_size, @fn_body_bold, toc_title_size)
+      draw_text_run(page, resolve_toc_title, @margin, cursor_y - toc_title_size, @fn_body_bold, toc_title_size)
       cursor_y -= toc_title_size * 1.6
 
       # Mémoriser l'état pour le post-rendu : la TOC sera dessinée

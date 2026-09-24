@@ -191,17 +191,34 @@ module IntegrationHelper
   end
 
   # Returns the rectangles (`x y w h re`) drawn in the document, as
-  # `{x, y, width, height}` in PDF points (y = bottom edge). Vector
+  # `{x, y, width, height}` in PDF page points (y = bottom edge). Vector
   # images (SVG) are drawn with these primitives, which lets a spec
-  # check where an SVG landed.
+  # check where an SVG landed. Since pdf 1.22 an SVG is drawn in its
+  # own units under a `cm` matrix: the current transformation (`q`,
+  # `Q`, `cm`) is tracked so that the result is in page coordinates.
   def self.rectangles(pdf_path : String) : Array(Tuple(Float64, Float64, Float64, Float64))
     reader = PDF::Reader.open(pdf_path)
     out = [] of Tuple(Float64, Float64, Float64, Float64)
-    pattern = /(-?[\d.]+) (-?[\d.]+) ([\d.]+) ([\d.]+) re/
     (0...reader.page_count).each do |i|
       reader.pages[i].content_streams.each do |bytes|
-        String.new(inflate_if_needed(bytes)).scan(pattern) do |m|
-          out << {m[1].to_f, m[2].to_f, m[3].to_f, m[4].to_f}
+        ctm = PDF::SVG::Transform::IDENTITY
+        stack = [] of PDF::SVG::Transform::Matrix
+        String.new(inflate_if_needed(bytes)).each_line do |line|
+          tokens = line.split
+          next if tokens.empty?
+          nums = tokens[0...-1].compact_map(&.to_f?)
+          case tokens.last
+          when "q" then stack << ctm
+          when "Q" then ctm = stack.pop? || PDF::SVG::Transform::IDENTITY
+          when "cm"
+            next unless nums.size == 6
+            ctm = PDF::SVG::Transform.multiply(ctm, {nums[0], nums[1], nums[2], nums[3], nums[4], nums[5]})
+          when "re"
+            next unless nums.size == 4
+            x0, y0 = PDF::SVG::Transform.apply(ctm, nums[0], nums[1])
+            x1, y1 = PDF::SVG::Transform.apply(ctm, nums[0] + nums[2], nums[1] + nums[3])
+            out << {Math.min(x0, x1), Math.min(y0, y1), (x1 - x0).abs, (y1 - y0).abs}
+          end
         end
       end
     end

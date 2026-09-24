@@ -1,5 +1,5 @@
 name: asciicrystal-pdf
-version: 2.3.24.109
+version: 2.3.24.110
 
 description: |
   AsciiDoc to PDF converter for Crystal, equivalent of the asciidoctor-pdf Ruby gem.

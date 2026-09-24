@@ -3,12 +3,11 @@
 :toc-title: Versions
 :toclevels: 2
 
-== Unreleased
-
-NOTE: Requires the `pdf` release adding `Page#svg(…, font:, bold_font:)` (after 1.20.3): raise the `pdf` constraint in `shard.yml` when releasing.
+== v2.3.24.110 — 2026-09-24
 
 === Added
 
+* **Table of contents title**: the document `toc-title` attribute (or `-a toc-title=…`) overrides the theme label, which defaults to French.
 * **Block image titles** (`.My title`) rendered under the image, italic, aligned like it and numbered "Figure 1." as upstream (`:figure-caption!:` drops the prefix).
 * **Image widths**: `pdfwidth` takes precedence over `width`; units `pt`, `px`, `cm`, `mm`, `in` and percentage of the content width.
 * **SVG text** drawn with the theme TTF fonts (regular and bold): ≈, →, ■… no longer become `?`.
@@ -16,11 +15,16 @@ NOTE: Requires the `pdf` release adding `Page#svg(…, font:, bold_font:)` (afte
 
 === Fixed
 
+* **Bitmap title logo** (`:title-logo-image:`) drawn above its place: it overflowed the margin and was clipped by the sheet edge.
 * **Bold last table cell containing a space** (`*11 570*`): rendered as "*11" (visible asterisk, end of the number lost). The trailing ` 570*` was read as a "repeat 570×" cell spec; fixed in the `asciicrystal` 2.0.26.18 parser.
 * **Image taller than the page**: scaled down, ratio kept, to fit on one page (it overflowed the footer and the sheet).
 * **Unreadable `width` value** (`100%`, or an unquoted comma in the alt text read as `width`): ignored instead of raising an exception that silently replaced the image with a frame.
 * **Block bitmap image anchored by its top** while `page.image` anchors by the bottom: it was drawn above its place, over the previous block (same defect as the title logo).
 * **Relative block image paths** resolved like the title logo's: `docdir`, then the `docfile` directory.
+
+=== Changed
+
+* Dependencies raised: `pdf` ~> 1.22.0 (SVG `<style>` and markers), `asciicrystal` ~> 2.0.26.18.
 
 == v2.3.24.109 — 2026-07-29
 

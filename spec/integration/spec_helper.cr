@@ -14,8 +14,12 @@ module IntegrationHelper
   # Converts an AsciiDoc source string to a PDF on a temp path and
   # returns that path. The caller is responsible for cleanup (usually
   # via `after_each` or `ensure`).
-  def self.convert(adoc_source : String) : String
-    stem = File.tempname("cap-pdf-it")
+  #
+  # `type1_fonts: false` keeps the theme's TrueType fonts (DejaVu), for
+  # the specs that check a TTF is used. `docdir` writes the source into
+  # that directory, so that relative images placed there resolve.
+  def self.convert(adoc_source : String, *, type1_fonts : Bool = true, docdir : String? = nil) : String
+    stem = docdir ? File.join(docdir, "doc-#{Random.rand(1_000_000)}") : File.tempname("cap-pdf-it")
     adoc_path = stem + ".adoc"
     pdf_path = stem + ".adoc.pdf"
     File.write(adoc_path, adoc_source)
@@ -29,20 +33,28 @@ module IntegrationHelper
     # semantics (text present, NBSP collapsed, title decoded), not
     # the font choice.
     theme = AsciicrystalPDF::Theme.new
-    theme.base_font_path = nil
-    theme.base_font_bold_path = nil
-    theme.base_font_italic_path = nil
-    theme.base_font_bold_italic_path = nil
-    theme.mono_font_path = nil
-    theme.mono_font_bold_path = nil
+    reset_fonts(theme) if type1_fonts
 
     options = {"docfile" => adoc_path, "outfile" => pdf_path} of String => String
+    # Avec un `docdir`, on se place en mode `unsafe` comme la CLI : en
+    # `secure` (défaut de l'API), asciidoctor vide `docdir` et les
+    # images relatives au document ne sont plus trouvées.
+    options["safe"] = "unsafe" if docdir
     doc = Asciicrystal.load_file(adoc_path, options)
     converter = AsciicrystalPDF::Converter.new("pdf", theme)
     converter.convert(doc)
 
     File.delete(adoc_path) if File.exists?(adoc_path)
     pdf_path
+  end
+
+  private def self.reset_fonts(theme : AsciicrystalPDF::Theme) : Nil
+    theme.base_font_path = nil
+    theme.base_font_bold_path = nil
+    theme.base_font_italic_path = nil
+    theme.base_font_bold_italic_path = nil
+    theme.mono_font_path = nil
+    theme.mono_font_bold_path = nil
   end
 
   # Returns the `/Title` value from the PDF `/Info` dictionary, or nil.
@@ -174,6 +186,28 @@ module IntegrationHelper
   # `2 × number_of_sections` for the standard pipeline.
   def self.xyz_destination_count(pdf_path : String) : Int32
     count_byte_pattern(pdf_path, "/XYZ")
+  end
+
+  # Returns the rectangles (`x y w h re`) drawn in the document, as
+  # `{x, y, width, height}` in PDF points (y = bottom edge). Vector
+  # images (SVG) are drawn with these primitives, which lets a spec
+  # check where an SVG landed.
+  def self.rectangles(pdf_path : String) : Array(Tuple(Float64, Float64, Float64, Float64))
+    reader = PDF::Reader.open(pdf_path)
+    out = [] of Tuple(Float64, Float64, Float64, Float64)
+    pattern = /(-?[\d.]+) (-?[\d.]+) ([\d.]+) ([\d.]+) re/
+    (0...reader.page_count).each do |i|
+      reader.pages[i].content_streams.each do |bytes|
+        String.new(inflate_if_needed(bytes)).scan(pattern) do |m|
+          out << {m[1].to_f, m[2].to_f, m[3].to_f, m[4].to_f}
+        end
+      end
+    end
+    out
+  end
+
+  def self.page_count(pdf_path : String) : Int32
+    PDF::Reader.open(pdf_path).page_count
   end
 
   # Returns the number of byte-level occurrences of `pattern` in the

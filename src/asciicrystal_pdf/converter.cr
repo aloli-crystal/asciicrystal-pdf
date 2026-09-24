@@ -1945,25 +1945,33 @@ module AsciicrystalPDF
 
       ensure_page
       alt = node.attr("alt") || target
-      width_attr = node.attr("width")
-      height_attr = node.attr("height")
-
       image_path = resolve_image_path(node, target)
 
-      if image_path && File.exists?(image_path)
-        begin
-          if svg_target?(target)
-            render_svg_image(image_path, node, width_attr, height_attr)
-          else
-            render_raster_image(image_path, node, width_attr, height_attr)
-          end
-        rescue
-          render_image_placeholder(alt)
+      unless image_path && File.exists?(image_path)
+        warn_image(target, "fichier introuvable")
+        render_image_placeholder(alt)
+        return ""
+      end
+
+      begin
+        if svg_target?(target)
+          render_svg_image(image_path, node)
+        else
+          render_raster_image(image_path, node)
         end
-      else
+      rescue ex
+        # Le cadre de remplacement reste, mais l'auteur doit savoir
+        # pourquoi : sans message, un attribut mal lu (ex. une virgule
+        # dans le texte alternatif non protégée par des guillemets, lue
+        # comme `width`) donnait un cadre vide inexpliqué.
+        warn_image(target, ex.message || ex.class.name)
         render_image_placeholder(alt)
       end
       ""
+    end
+
+    private def warn_image(target : String, reason : String) : Nil
+      STDERR.puts "Avertissement : image « #{target} » non rendue (#{reason}) ; remplacée par un cadre."
     end
 
     # Vector path: route `.svg` → `page.svg`. Bitmap loaders (PDF::Images::Image)
@@ -1973,12 +1981,7 @@ module AsciicrystalPDF
       target.downcase.ends_with?(".svg")
     end
 
-    private def render_svg_image(
-      path : String,
-      node : Asciicrystal::Block,
-      width_attr : String?,
-      height_attr : String?,
-    ) : Nil
+    private def render_svg_image(path : String, node : Asciicrystal::Block) : Nil
       svg_data = File.read(path)
       parser = @doc.svg_parser_for(svg_data)
 
@@ -1992,37 +1995,116 @@ module AsciicrystalPDF
         svg_h = vb[3] if vb[3] > 0
       end
 
-      max_w = @content_width
-      display_w = width_attr ? [width_attr.to_f, max_w].min : [svg_w, max_w].min
-      # Ratio préservé même quand seul width est précisé — sans ça
-      # SVG::Renderer prend la hauteur native, ce qui distord l'image.
-      ratio = display_w / svg_w
-      display_h = height_attr ? height_attr.to_f : svg_h * ratio
-
-      check_page_break(display_h + 8.0)
+      display_w, display_h = image_display_size(node, svg_w, svg_h)
+      caption_lines = image_caption_lines(node)
+      check_page_break(display_h + caption_height(caption_lines) + 8.0)
       page = @current_page.not_nil!
       x = align_image_x(node, display_w)
-      page.svg(svg_data, at: {x, @current_y}, width: display_w, height: display_h)
-      @current_y -= display_h + 8.0
+      # Les `<text>` du SVG prennent la police du corps quand elle est
+      # une TTF : sinon Helvetica WinAnsi remplace ≈, →, ■… par `?`.
+      page.svg(svg_data, at: {x, @current_y}, width: display_w, height: display_h,
+        font: @font_body.as?(PDF::Fonts::TrueTypeFont),
+        bold_font: @font_body_bold.as?(PDF::Fonts::TrueTypeFont))
+      @current_y -= display_h
+      render_image_caption(node, caption_lines)
+      @current_y -= 8.0
     end
 
-    private def render_raster_image(
-      path : String,
-      node : Asciicrystal::Block,
-      width_attr : String?,
-      height_attr : String?,
-    ) : Nil
+    private def render_raster_image(path : String, node : Asciicrystal::Block) : Nil
       img = PDF::Images::Image.load(path)
-      max_w = @content_width
-      display_w = width_attr ? [width_attr.to_f, max_w].min : [img.width.to_f, max_w].min
-      ratio = display_w / img.width.to_f
-      display_h = height_attr ? height_attr.to_f : img.height.to_f * ratio
-
-      check_page_break(display_h + 8.0)
+      display_w, display_h = image_display_size(node, img.width.to_f, img.height.to_f)
+      caption_lines = image_caption_lines(node)
+      check_page_break(display_h + caption_height(caption_lines) + 8.0)
       page = @current_page.not_nil!
       x = align_image_x(node, display_w)
-      page.image(img, at: {x, @current_y}, width: display_w)
-      @current_y -= display_h + 8.0
+      # `page.image` ancre l'image par son coin INFÉRIEUR gauche (cf.
+      # `render_title_logo`) : on passe donc le bas de l'image. Passer
+      # `@current_y` la dessinait au-dessus de sa place, par-dessus le
+      # bloc précédent.
+      page.image(img, at: {x, @current_y - display_h}, width: display_w, height: display_h)
+      @current_y -= display_h
+      render_image_caption(node, caption_lines)
+      @current_y -= 8.0
+    end
+
+    # Taille d'affichage d'une image de dimensions natives `native_w` ×
+    # `native_h` :
+    #
+    # * largeur : `pdfwidth`, sinon `width` (nombre, `pt`/`cm`/`mm`/`in`
+    #   ou pourcentage de la largeur utile), sinon la largeur native ;
+    #   jamais plus que la largeur utile ;
+    # * hauteur : `height` si fourni, sinon proportionnelle ;
+    # * une image plus haute que la zone utile d'une page est réduite,
+    #   ratio conservé, pour tenir sur une page (elle débordait sur le
+    #   pied de page et hors de la feuille).
+    private def image_display_size(node : Asciicrystal::Block, native_w : Float64, native_h : Float64) : {Float64, Float64}
+      max_w = @content_width
+      requested_w = parse_image_length(node.attr("pdfwidth")) || parse_image_length(node.attr("width"))
+      display_w = [requested_w || native_w, max_w].min
+      display_h = parse_image_length(node.attr("height")) || native_h * display_w / native_w
+
+      caption_h = caption_height(image_caption_lines(node))
+      max_h = @page_height - 2 * @margin - 20.0 - caption_h - 8.0
+      if display_h > max_h && max_h > 0
+        display_w *= max_h / display_h
+        display_h = max_h
+      end
+      {display_w, display_h}
+    end
+
+    # Longueur d'image : nombre nu ou `px` (points), `pt`, `cm`, `mm`,
+    # `in`, ou `%` de la largeur utile. `nil` si absente ou illisible
+    # (au lieu de lever une exception sur `"100%".to_f`).
+    private def parse_image_length(value : String?) : Float64?
+      return nil unless value
+      v = value.strip.downcase
+      if v.ends_with?('%')
+        v.rchop.to_f?.try { |n| n * @content_width / 100.0 }
+      else
+        parse_logo_length(v.ends_with?("px") ? v[0...-2] : v)
+      end
+    end
+
+    # Titre d'image (`.Mon titre`), préfixé de sa numérotation
+    # (« Figure 1. ») comme en amont ; `:figure-caption!:` la retire.
+    # Découpé en lignes à la largeur utile.
+    private def image_caption_lines(node : Asciicrystal::Block) : Array(String)
+      title = node.title
+      return [] of String if title.nil? || title.empty?
+      # Asciidoctor (Ruby) numérote les images à l'analyse :
+      # `block.assign_caption(attributes.delete('caption'), 'figure')`.
+      # Le parser asciicrystal ne le fait pas pour le contexte `:image`
+      # (absent de CAPTION_ATTRIBUTE_NAMES) : on complète ici, dans
+      # l'ordre du document. Sans effet si une légende existe déjà.
+      node.assign_caption(node.attr("caption"), :figure)
+      caption = strip_inline_markup(node.captioned_title)
+      wrap_text(caption, @content_width, image_caption_font_size, @fn_body_italic)
+    end
+
+    private def image_caption_font_size : Float64
+      @theme.base_font_size - 1
+    end
+
+    private def caption_height(lines : Array(String)) : Float64
+      return 0.0 if lines.empty?
+      4.0 + lines.size * image_caption_font_size * @theme.base_line_height
+    end
+
+    # Titre sous l'image, aligné comme elle, en italique gris.
+    private def render_image_caption(node : Asciicrystal::Block, lines : Array(String)) : Nil
+      return if lines.empty?
+      page = @current_page.not_nil!
+      size = image_caption_font_size
+      line_h = size * @theme.base_line_height
+      @current_y -= 4.0
+      set_font(page, @fn_body_italic, size)
+      page.fill_color("888888")
+      lines.each do |line|
+        x = align_image_x(node, text_width(line, @fn_body_italic, size))
+        draw_text_run(page, line, x, @current_y - size, @fn_body_italic, size)
+        @current_y -= line_h
+      end
+      page.fill_color("000000")
     end
 
     private def align_image_x(node : Asciicrystal::Block, display_w : Float64) : Float64
@@ -2033,16 +2115,12 @@ module AsciicrystalPDF
       end
     end
 
+    # Même résolution que le logo de garde (`resolve_image_path_str`) :
+    # `docdir`, puis le dossier du `docfile`. Sans ce repli, en mode
+    # sûr `secure`/`server` (défaut de l'API, `docdir` vidé), une image
+    # à chemin relatif n'était trouvée que depuis le répertoire courant.
     private def resolve_image_path(node : Asciicrystal::Block, target : String) : String?
-      return nil if target.empty?
-      return target if File.exists?(target)
-      if (docdir = node.document.attr("docdir"))
-        candidate = File.join(docdir, target)
-        return candidate if File.exists?(candidate)
-        candidate2 = File.join(docdir, "images", target)
-        return candidate2 if File.exists?(candidate2)
-      end
-      nil
+      resolve_image_path_str(node.document, target)
     end
 
     private def render_image_placeholder(alt : String) : Nil

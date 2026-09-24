@@ -1,3 +1,21 @@
+== Non publié
+
+NOTE: Nécessite la version de `pdf` qui ajoute `Page#svg(…, font:, bold_font:)` (au-delà de 1.20.3) : contrainte `pdf` à relever dans `shard.yml` à la publication.
+
+=== Ajouté
+
+* **Titre des images de bloc** (`.Mon titre`) rendu sous l'image, en italique, aligné comme elle et numéroté « Figure 1. » comme en amont (`:figure-caption!:` retire le préfixe).
+* **Largeurs d'image** : `pdfwidth` prioritaire sur `width` ; unités `pt`, `px`, `cm`, `mm`, `in` et pourcentage de la largeur utile.
+* **Texte des SVG** dessiné avec la police TTF du thème (corps et gras) : ≈, →, ■… ne deviennent plus `?`.
+* **Avertissement** sur la sortie d'erreur quand une image est remplacée par un cadre (fichier introuvable ou erreur de rendu), avec la raison.
+
+=== Corrigé
+
+* **Image plus haute que la page** : réduite, ratio conservé, pour tenir sur une page (elle débordait sur le pied de page et hors de la feuille).
+* **Valeur de `width` illisible** (`100%`, ou virgule non protégée dans le texte alternatif, lue comme `width`) : ignorée au lieu de lever une exception qui remplaçait silencieusement l'image par un cadre.
+* **Image bitmap de bloc ancrée par le haut** alors que `page.image` ancre par le bas : elle se dessinait au-dessus de sa place, par-dessus le bloc précédent (même défaut que le logo de garde).
+* **Chemins relatifs des images de bloc** résolus comme ceux du logo de garde : `docdir`, puis dossier du `docfile`.
+
 == v2.3.24.109 — 2026-07-29
 
 * Renommage du dossier interne `src/asciidoctor_pdf/` → `src/asciicrystal_pdf/` (+ fichier d'entrée). Le répertoire de config utilisateur passe à `${XDG_CONFIG_HOME:-~/.config}/asciicrystal-pdf/` (auparavant `asciidoctor-pdf`). Aucun changement d'API ; les mentions de provenance du gem Ruby sont conservées.

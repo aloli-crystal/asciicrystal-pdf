@@ -3,6 +3,24 @@
 :toc-title: Versions
 :toclevels: 2
 
+== Unreleased
+
+NOTE: Requires the `pdf` release adding `Page#svg(…, font:, bold_font:)` (after 1.20.3): raise the `pdf` constraint in `shard.yml` when releasing.
+
+=== Added
+
+* **Block image titles** (`.My title`) rendered under the image, italic, aligned like it and numbered "Figure 1." as upstream (`:figure-caption!:` drops the prefix).
+* **Image widths**: `pdfwidth` takes precedence over `width`; units `pt`, `px`, `cm`, `mm`, `in` and percentage of the content width.
+* **SVG text** drawn with the theme TTF fonts (regular and bold): ≈, →, ■… no longer become `?`.
+* **Warning** on standard error when an image is replaced by a frame (file not found or rendering error), with the reason.
+
+=== Fixed
+
+* **Image taller than the page**: scaled down, ratio kept, to fit on one page (it overflowed the footer and the sheet).
+* **Unreadable `width` value** (`100%`, or an unquoted comma in the alt text read as `width`): ignored instead of raising an exception that silently replaced the image with a frame.
+* **Block bitmap image anchored by its top** while `page.image` anchors by the bottom: it was drawn above its place, over the previous block (same defect as the title logo).
+* **Relative block image paths** resolved like the title logo's: `docdir`, then the `docfile` directory.
+
 == v2.3.24.109 — 2026-07-29
 
 * Rename the internal source dir `src/asciidoctor_pdf/` → `src/asciicrystal_pdf/` (and entry file). The user config dir is now `${XDG_CONFIG_HOME:-~/.config}/asciicrystal-pdf/` (was `asciidoctor-pdf`). No API change; Ruby-gem provenance mentions preserved.

@@ -289,12 +289,16 @@ module AsciicrystalPDF
       # `attr?` ne suffit PAS ici : asciicrystal fournit un défaut
       # intégré (« Table of Contents », cf. constants.cr), si bien que
       # l'attribut est toujours présent. On ne retient donc sa valeur
-      # que si le DOCUMENT l'a effectivement définie — sinon tous les
-      # documents français basculeraient sur le défaut anglais du
-      # parser au lieu du libellé du thème.
+      # que si elle a été passée de l'extérieur (`-a toc-title=…`, API)
+      # ou si elle diffère de ce défaut — sinon tous les documents
+      # français basculeraient sur le défaut anglais du parser au lieu
+      # du libellé du thème. Limite assumée : un `:toc-title: Table of
+      # Contents` explicite est confondu avec le défaut.
       if (as_doc = node.as?(Asciicrystal::Document)) &&
-         as_doc.@attributes_modified.includes?("toc-title")
-        toc_title_attr = as_doc.attr("toc-title").to_s.strip
+         (toc_title_attr = as_doc.attributes["toc-title"]?) &&
+         (as_doc.attribute_overrides.has_key?("toc-title") ||
+         toc_title_attr != Asciicrystal::DEFAULT_ATTRIBUTES["toc-title"]?)
+        toc_title_attr = toc_title_attr.strip
         @document_toc_title = toc_title_attr.empty? ? nil : toc_title_attr
       end
 

@@ -26,6 +26,27 @@ describe "toc-title" do
     File.delete(pdf)
   end
 
+  it "uses a toc-title passed from outside the document (-a / API)" do
+    pdf = IntegrationHelper.convert(<<-ADOC, attributes: {"toc-title" => "Contents"})
+      = A document in English
+      :toc:
+
+      == First section
+
+      Text.
+
+      == Second section
+
+      Text.
+      ADOC
+
+    text = IntegrationHelper.text(pdf)
+    text.should contain("Contents")
+    text.should_not contain("Table des")
+
+    File.delete(pdf)
+  end
+
   it "falls back to the theme label when the attribute is absent" do
     pdf = IntegrationHelper.convert(<<-ADOC)
       = Un document en français

@@ -18,7 +18,7 @@ module IntegrationHelper
   # `type1_fonts: false` keeps the theme's TrueType fonts (DejaVu), for
   # the specs that check a TTF is used. `docdir` writes the source into
   # that directory, so that relative images placed there resolve.
-  def self.convert(adoc_source : String, *, type1_fonts : Bool = true, docdir : String? = nil) : String
+  def self.convert(adoc_source : String, *, type1_fonts : Bool = true, docdir : String? = nil, attributes : Hash(String, String)? = nil) : String
     stem = docdir ? File.join(docdir, "doc-#{Random.rand(1_000_000)}") : File.tempname("cap-pdf-it")
     adoc_path = stem + ".adoc"
     pdf_path = stem + ".adoc.pdf"
@@ -40,6 +40,8 @@ module IntegrationHelper
     # `secure` (défaut de l'API), asciidoctor vide `docdir` et les
     # images relatives au document ne sont plus trouvées.
     options["safe"] = "unsafe" if docdir
+    # Attributs passés de l'extérieur, comme `-a nom=valeur` en CLI.
+    attributes.try &.each { |k, v| options[k] = v }
     doc = Asciicrystal.load_file(adoc_path, options)
     converter = AsciicrystalPDF::Converter.new("pdf", theme)
     converter.convert(doc)

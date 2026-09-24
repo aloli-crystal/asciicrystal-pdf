@@ -2071,12 +2071,7 @@ module AsciicrystalPDF
     private def image_caption_lines(node : Asciicrystal::Block) : Array(String)
       title = node.title
       return [] of String if title.nil? || title.empty?
-      # Asciidoctor (Ruby) numérote les images à l'analyse :
-      # `block.assign_caption(attributes.delete('caption'), 'figure')`.
-      # Le parser asciicrystal ne le fait pas pour le contexte `:image`
-      # (absent de CAPTION_ATTRIBUTE_NAMES) : on complète ici, dans
-      # l'ordre du document. Sans effet si une légende existe déjà.
-      node.assign_caption(node.attr("caption"), :figure)
+      # La légende (« Figure 1. ») est posée par le parser asciicrystal.
       caption = strip_inline_markup(node.captioned_title)
       wrap_text(caption, @content_width, image_caption_font_size, @fn_body_italic)
     end

@@ -7,6 +7,8 @@
 
 NOTE: Requires the `pdf` release adding `Page#svg(…, font:, bold_font:)` (after 1.20.3): raise the `pdf` constraint in `shard.yml` when releasing.
 
+NOTE: Requires the `asciicrystal` release that no longer reads a cell spec at the end of a table's last fragment (after 2.0.26.17): raise the `asciicrystal` constraint in `shard.yml` when releasing.
+
 === Added
 
 * **Block image titles** (`.My title`) rendered under the image, italic, aligned like it and numbered "Figure 1." as upstream (`:figure-caption!:` drops the prefix).
@@ -16,6 +18,7 @@ NOTE: Requires the `pdf` release adding `Page#svg(…, font:, bold_font:)` (afte
 
 === Fixed
 
+* **Bold last table cell containing a space** (`*11 570*`): rendered as "*11" (visible asterisk, end of the number lost). The trailing ` 570*` was read as a "repeat 570×" cell spec; fixed in the `asciicrystal` parser.
 * **Image taller than the page**: scaled down, ratio kept, to fit on one page (it overflowed the footer and the sheet).
 * **Unreadable `width` value** (`100%`, or an unquoted comma in the alt text read as `width`): ignored instead of raising an exception that silently replaced the image with a frame.
 * **Block bitmap image anchored by its top** while `page.image` anchors by the bottom: it was drawn above its place, over the previous block (same defect as the title logo).

@@ -2,6 +2,8 @@
 
 NOTE: Nécessite la version de `pdf` qui ajoute `Page#svg(…, font:, bold_font:)` (au-delà de 1.20.3) : contrainte `pdf` à relever dans `shard.yml` à la publication.
 
+NOTE: Nécessite la version d'`asciicrystal` qui ne lit plus de spec de cellule à la fin du dernier fragment d'un tableau (au-delà de 2.0.26.17) : contrainte `asciicrystal` à relever dans `shard.yml` à la publication.
+
 === Ajouté
 
 * **Titre des images de bloc** (`.Mon titre`) rendu sous l'image, en italique, aligné comme elle et numéroté « Figure 1. » comme en amont (`:figure-caption!:` retire le préfixe).
@@ -11,6 +13,7 @@ NOTE: Nécessite la version de `pdf` qui ajoute `Page#svg(…, font:, bold_font:
 
 === Corrigé
 
+* **Dernière cellule d'un tableau en gras avec une espace** (`*11 570*`) : rendue « *11 » (astérisque visible, fin du nombre perdue). Le ` 570*` final était lu comme un spec de cellule « répéter 570× » ; corrigé dans le parser `asciicrystal`.
 * **Image plus haute que la page** : réduite, ratio conservé, pour tenir sur une page (elle débordait sur le pied de page et hors de la feuille).
 * **Valeur de `width` illisible** (`100%`, ou virgule non protégée dans le texte alternatif, lue comme `width`) : ignorée au lieu de lever une exception qui remplaçait silencieusement l'image par un cadre.
 * **Image bitmap de bloc ancrée par le haut** alors que `page.image` ancre par le bas : elle se dessinait au-dessus de sa place, par-dessus le bloc précédent (même défaut que le logo de garde).

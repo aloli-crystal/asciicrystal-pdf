@@ -157,4 +157,27 @@ describe "Tables" do
     text.should contain("finales")
     File.delete(pdf)
   end
+
+  it "renders bold cells whose content holds a space (thousands separator)" do
+    pdf = IntegrationHelper.convert(<<-ADOC)
+      = Test
+
+      [cols="2,2,2,2",options="header"]
+      |===
+      | Mois | Toiture | Allège | Total
+
+      | janvier | 370 | 85 | 455
+      | *Année* | *10 400* | *1 170* | *11 570*
+      |===
+      ADOC
+    # Le gras est émis mot par mot (`10`, ` 400`) et le helper sépare
+    # chaque chaîne d'une espace : on ramène les espaces multiples à une.
+    text = IntegrationHelper.text(pdf).squeeze(' ')
+    text.should_not contain("*")
+    text.should contain("Année")
+    text.should contain("10 400")
+    text.should contain("1 170")
+    text.should contain("11 570")
+    File.delete(pdf)
+  end
 end

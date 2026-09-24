@@ -180,4 +180,22 @@ describe "Tables" do
     text.should contain("11 570")
     File.delete(pdf)
   end
+
+  it "merges a cell over several columns with a spec at the start of a line (5+|)" do
+    pdf = IntegrationHelper.convert(<<-ADOC)
+      = Test
+
+      [cols="3,2,1,2,2,2",options="header"]
+      |===
+      | Pièce | Section (mm) | Nb | Longueur | Mètres linéaires | Volume
+
+      | Parcloses du vitrage nord | 20 × 32 | – | – | env. 38 m | 0,02 m³
+      5+| Total | env. 3,6 m³
+      |===
+      ADOC
+    text = IntegrationHelper.text(pdf).squeeze(' ')
+    text.should_not contain("5+")
+    text.should contain("Total env. 3,6 m³")
+    File.delete(pdf)
+  end
 end

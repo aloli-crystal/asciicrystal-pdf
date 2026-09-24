@@ -3,10 +3,11 @@
 === Corrigé
 
 * **Renvoi sans libellé** (`<<pilotage>>`) : affiche le titre de la section ciblée, comme Asciidoctor, et non son identifiant (« voir pilotage ») ; corrigé dans `asciicrystal` 2.0.26.19. Une cible inconnue s'affiche `[id]`.
+* **Fusion de cellules en début de ligne** (`5+|`, `.2+|`) : le spec restait collé à la cellule précédente (« 0,02 m³ 5+ ») et la ligne se décalait ; corrigé dans `asciicrystal` 2.0.26.20.
 
 === Modifié
 
-* Dépendance relevée : `asciicrystal` ~> 2.0.26.19.
+* Dépendance relevée : `asciicrystal` ~> 2.0.26.20.
 
 == v2.3.24.110 — 2026-09-24
 

@@ -8,10 +8,11 @@
 === Fixed
 
 * **Xref without label** (`<<pilotage>>`): shows the target section title, as Asciidoctor does, instead of its id ("voir pilotage"); fixed in `asciicrystal` 2.0.26.19. An unknown target shows `[id]`.
+* **Cell span at the start of a line** (`5+|`, `.2+|`): the spec stuck to the previous cell ("0,02 m³ 5+") and the row shifted; fixed in `asciicrystal` 2.0.26.20.
 
 === Changed
 
-* Dependency raised: `asciicrystal` ~> 2.0.26.19.
+* Dependency raised: `asciicrystal` ~> 2.0.26.20.
 
 == v2.3.24.110 — 2026-09-24
 

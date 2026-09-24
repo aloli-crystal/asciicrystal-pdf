@@ -23,7 +23,7 @@ dependencies:
     version: "~> 2.0.26.17"
   pdf:
     github: aloli-crystal/pdf
-    version: "~> 1.20.1"
+    version: "~> 1.21.0"
   rouge:
     github: aloli-crystal/rouge
     version: "~> 4.7.0.3"

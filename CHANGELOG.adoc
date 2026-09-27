@@ -3,7 +3,7 @@
 :toc-title: Versions
 :toclevels: 2
 
-== Unreleased
+== v2.3.24.111 — 2026-09-27
 
 === Fixed
 

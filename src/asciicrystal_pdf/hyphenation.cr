@@ -183,6 +183,9 @@ module AsciicrystalPDF
       @@cache = {} of String => Hyphenator?
 
       def self.for(lang : String) : Hyphenator?
+        # `lang` vient du document (`:lang:`) et entre dans un nom de
+        # fichier : un code de langue n'a ni `/` ni `..`.
+        return nil unless lang.matches?(/\A[A-Za-z0-9-]+\z/)
         canonical = ALIASES[lang]? || lang
         return @@cache[canonical] if @@cache.has_key?(canonical)
 

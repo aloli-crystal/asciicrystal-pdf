@@ -1,3 +1,15 @@
+== Non publié
+
+=== Sécurité
+
+* **Fichiers lus hors du répertoire du document en mode sûr** : avec `safe` à `safe`, `server` ou `secure`, une image désignée par un chemin absolu ou par un chemin relatif contenant `..` (`image::/ailleurs/secret.png[]`, `image::../ailleurs/secret.png[]`) était lue hors du répertoire du document et incorporée au PDF ; `image::/etc/hosts[]` faisait ouvrir `/etc/hosts`. Un document rédigé par un tiers pouvait ainsi faire entrer dans le PDF n'importe quelle image lisible du serveur. Comme Asciidoctor (`normalize_system_path` avec `jail`), dès `safe`, tout chemin est désormais enfermé dans le répertoire de base du document (option `base_dir`, sinon dossier du document, y compris en `server`/`secure` où `docdir` est masqué) : un chemin absolu ou un `..` qui en sort y est ramené (`/etc/hosts` → `<rép>/etc/hosts`), un lien symbolique menant au-dehors est refusé, et aucun fichier extérieur n'est ouvert. Couverts : images de bloc, images en ligne (y compris une balise `<img>` brute dans un passthrough), logo de garde (`:title-logo-image:`) et fichier de thème désigné par `:pdf-theme:`. Le mode `unsafe` (défaut de la CLI) est inchangé.
+* **Images distantes** (`http://`, `https://`) jamais téléchargées, avec ou sans `allow-uri-read` : l'avertissement émis le dit désormais.
+* **Langue de césure** (`:lang:`) : seul un code de langue (lettres, chiffres, `-`) sert à composer le nom du fichier de motifs.
+
+=== Corrigé
+
+* **Images relatives en mode `server`/`secure`** résolues depuis le répertoire du document, et non plus depuis le répertoire courant du processus.
+
 == v2.3.24.111 — 2026-09-27
 
 === Corrigé

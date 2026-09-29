@@ -99,6 +99,9 @@ module AsciicrystalPDF
     # Titre du sommaire tel que demandé par le document
     # (`:toc-title:`), qui prime sur le libellé du thème.
     @document_toc_title : String? = nil
+    # Répertoire hors duquel aucune image n'est lue quand le mode sûr
+    # vaut SAFE ou plus (cf. `image_jail`). `nil` en mode UNSAFE.
+    @image_jail : String? = nil
     @index_entries : Array(IndexEntry) = [] of IndexEntry
     # Entrées de la table des matières.
     # Chaque entrée capture {titre, niveau, page (1-based), nom de destination
@@ -260,6 +263,7 @@ module AsciicrystalPDF
       # ASCII spaces only just before each `page.text` call.
       @document_title = decode_html_entities(node.doctitle || "")
       @output_path = determine_output_path(node)
+      @image_jail = image_jail(node)
 
       # Nom du fichier source, pour préfixer les WARNING (savoir de quel
       # fichier ils proviennent en conversion multi-fichiers). `docfile`
@@ -308,8 +312,9 @@ module AsciicrystalPDF
       # fichier YAML) correspondant. Alignement de comportement entre
       # le CLI (qui faisait déjà ça) et l'API directe (qui ignorait
       # cet attribut).
-      if !@theme_provided && (pdf_theme = node.attr("pdf-theme")) && !pdf_theme.to_s.empty?
-        @theme = ThemeLoader.resolve(pdf_theme.to_s)
+      if !@theme_provided && (pdf_theme = node.attr("pdf-theme")) && !pdf_theme.to_s.empty? &&
+         (theme = resolve_document_theme(pdf_theme.to_s))
+        @theme = theme
         @margin = @theme.page_margin
         apply_page_size(@theme.page_size, @theme.page_layout)
         load_theme_fonts
@@ -1972,7 +1977,7 @@ module AsciicrystalPDF
       image_path = resolve_image_path(node, target)
 
       unless image_path && File.exists?(image_path)
-        warn_image(target, "fichier introuvable")
+        warn_image(target, uri_target?(target) ? "image distante non téléchargée" : "fichier introuvable")
         render_image_placeholder(alt)
         return ""
       end
@@ -3762,8 +3767,22 @@ module AsciicrystalPDF
       {s, opts}
     end
 
+    # Résout le chemin d'une image désignée par le document (image de
+    # bloc, image en ligne, logo de garde). Une URL n'est jamais
+    # téléchargée : seuls des fichiers locaux sont lus.
+    #
+    # En mode sûr SAFE ou plus, le chemin est enfermé dans le
+    # répertoire du document, comme le fait Asciidoctor
+    # (`normalize_system_path` avec `jail`) : un chemin absolu ou un
+    # `..` qui en sortirait y est ramené, et aucun fichier extérieur
+    # n'est ouvert. Sans cela, un document déposé par un tiers et
+    # converti en `secure` pouvait incorporer au PDF n'importe quelle
+    # image lisible du serveur (`image::/…/secret.png[]`).
     private def resolve_image_path_str(doc : Asciicrystal::Document, target : String) : String?
-      return nil if target.empty?
+      return nil if target.empty? || uri_target?(target)
+      if (jail = image_jail(doc))
+        return resolve_jailed_path(target, jail)
+      end
       return target if File.exists?(target)
 
       # Répertoires candidats pour un chemin relatif, dans l'ordre :
@@ -3787,6 +3806,101 @@ module AsciicrystalPDF
         candidate2 = File.join(dir, "images", target)
         return candidate2 if File.exists?(candidate2)
       end
+      nil
+    end
+
+    private def uri_target?(target : String) : Bool
+      target.matches?(/\A[a-zA-Z][a-zA-Z0-9.+-]*:\/\//)
+    end
+
+    # Répertoire dans lequel enfermer les fichiers lus pour le
+    # document, ou `nil` en mode UNSAFE (aucune restriction).
+    #
+    # C'est le `base_dir` d'Asciidoctor : l'option `base_dir` si elle
+    # est donnée, sinon le dossier du document. En mode SERVER ou plus,
+    # asciicrystal vide `docdir` et réduit `docfile` à son nom ; le
+    # dossier du document ne subsiste que dans le curseur du lecteur,
+    # créé avant ce masquage. Faute de mieux : le répertoire courant.
+    private def image_jail(doc : Asciicrystal::Document) : String?
+      while (parent = doc.parent_document)
+        doc = parent
+      end
+      return nil if doc.safe < Asciicrystal::SafeMode::SAFE
+
+      base =
+        if doc.base_dir != "."
+          doc.base_dir
+        elsif (docdir = doc.attr("docdir")) && !docdir.empty?
+          docdir
+        elsif (reader = doc.reader)
+          reader.dir
+        else
+          "."
+        end
+      File.expand_path(base)
+    end
+
+    # Cherche `target` dans `jail`, puis dans `jail/images`, et ne
+    # rend que des fichiers réellement situés dans `jail`.
+    private def resolve_jailed_path(target : String, jail : String) : String?
+      candidates = [jail_system_path(target, jail)]
+      candidates << jail_system_path(File.join("images", target), jail, warn: false) unless Path.new(target).absolute?
+      candidates.find { |path| File.file?(path) && inside_jail?(path, jail) }
+    end
+
+    # Équivalent de `normalize_system_path(target, jail, jail)`
+    # d'Asciidoctor : un chemin absolu déjà dans `jail` est gardé ; tout
+    # autre chemin est rattaché à `jail`, les `..` ne remontant jamais
+    # au-dessus (`/etc/hosts` → `<jail>/etc/hosts`, `../x.png` →
+    # `<jail>/x.png`).
+    private def jail_system_path(target : String, jail : String, warn : Bool = true) : String
+      path = Path.new(target)
+      if path.absolute?
+        normalized = path.normalize.to_s
+        return normalized if within_dir?(normalized, jail)
+      end
+
+      parts = [] of String
+      escaped = path.absolute?
+      path.parts.each do |part|
+        next if part.empty? || part == "." || part == "/"
+        if part == ".."
+          escaped = true if parts.pop?.nil?
+        else
+          parts << part
+        end
+      end
+      if escaped && warn
+        STDERR.puts "Avertissement : chemin « #{target} » hors du répertoire du document ; ramené dedans (mode sûr)."
+      end
+      File.join([jail] + parts)
+    end
+
+    # Vrai si `path` désigne un fichier existant situé dans `jail`, liens
+    # symboliques résolus (un lien placé dans le répertoire ne doit pas
+    # ouvrir un fichier extérieur).
+    private def inside_jail?(path : String, jail : String) : Bool
+      real = File.realpath(path)
+      real_jail = File.realpath(jail)
+      within_dir?(real, real_jail)
+    rescue File::Error
+      false
+    end
+
+    private def within_dir?(path : String, dir : String) : Bool
+      path == dir || path.starts_with?(dir.ends_with?('/') ? dir : "#{dir}/")
+    end
+
+    # Thème désigné par l'attribut `:pdf-theme:` du document : un nom de
+    # thème embarqué, ou un fichier YAML. En mode sûr, le fichier est
+    # cherché dans le répertoire du document et jamais au-dehors.
+    private def resolve_document_theme(name : String) : Theme?
+      jail = @image_jail
+      return ThemeLoader.resolve(name) if jail.nil? || ThemeLoader::BUILTIN_THEMES.has_key?(name.downcase)
+
+      path = jail_system_path(name, jail)
+      return ThemeLoader.load(path) if File.file?(path) && inside_jail?(path, jail)
+      STDERR.puts "Avertissement : thème « #{name} » introuvable dans le répertoire du document ; ignoré."
       nil
     end
 
@@ -4079,6 +4193,19 @@ module AsciicrystalPDF
       font_size : Float64,
     ) : Nil
       page = @current_page.not_nil!
+      # Le chemin vient d'une balise `<img src>` : celle du HTML produit
+      # par asciicrystal pour `image:cible[]` (chemin non résolu, avec
+      # `imagesdir`), mais aussi une balise écrite par l'auteur dans un
+      # passthrough (`+++<img src=…>+++`). En mode sûr, il est résolu
+      # dans le répertoire du document, et rien n'est ouvert au-dehors.
+      if (jail = @image_jail)
+        resolved = uri_target?(img_path) ? nil : resolve_jailed_path(img_path, jail)
+        unless resolved
+          draw_text_run(page, seg.text, x, y, @fn_body, font_size)
+          return
+        end
+        img_path = resolved
+      end
       display_w = seg.image_width || (font_size * 1.2)
       display_h = seg.image_height || display_w
       begin

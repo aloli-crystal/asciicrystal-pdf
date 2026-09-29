@@ -3,6 +3,18 @@
 :toc-title: Versions
 :toclevels: 2
 
+== Unreleased
+
+=== Security
+
+* **Files read outside the document directory in safe mode**: with `safe` set to `safe`, `server` or `secure`, an image named by an absolute path or by a relative path containing `..` (`image::/elsewhere/secret.png[]`, `image::../elsewhere/secret.png[]`) was read outside the document directory and embedded in the PDF; `image::/etc/hosts[]` made the converter open `/etc/hosts`. A document written by a third party could thus pull any readable image of the server into the PDF. As Asciidoctor does (`normalize_system_path` with `jail`), from `safe` upwards every path is now confined to the document base directory (`base_dir` option, else the document directory, even in `server`/`secure` where `docdir` is hidden): an absolute path or a `..` leaving it is brought back inside (`/etc/hosts` → `<dir>/etc/hosts`), symbolic links leading outside are refused, and no file outside is opened. Covered: block images, inline images (including a raw `<img>` in a passthrough), the title logo (`:title-logo-image:`) and a theme file named by `:pdf-theme:`. `unsafe` mode (CLI default) is unchanged.
+* **Remote images** (`http://`, `https://`) are never downloaded, `allow-uri-read` or not: the warning now says so.
+* **Hyphenation language** (`:lang:`): only a language code (letters, digits, `-`) is used to build the pattern file name.
+
+=== Fixed
+
+* **Relative images in `server`/`secure` mode** resolved from the document directory, and no longer from the current directory of the process.
+
 == v2.3.24.111 — 2026-09-27
 
 === Fixed

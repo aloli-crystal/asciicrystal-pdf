@@ -1,3 +1,9 @@
+== v2.3.24.113 — 2026-10-15
+
+=== Corrigé
+
+* **Blocs rattachés à un élément de liste** (continuation `+` : bloc de code, paragraphe, admonition, tableau…) : dessinés contre la marge de la page au lieu de l'être sous le texte de l'élément. Ils sont maintenant alignés sur le texte de l'élément, comme dans Asciidoctor PDF, y compris après un saut de page ; les sous-listes gardent leur propre retrait.
+
 == v2.3.24.112 — 2026-09-29
 
 === Sécurité

@@ -1699,11 +1699,25 @@ module AsciicrystalPDF
         # à l'intérieur d'un item étaient silencieusement ignorés
         # — typiquement un bloc source affiché à plat dans le
         # source AsciiDoc disparaissait du PDF final.
+        #
+        # Les blocs non-liste sont alignés sur le texte de l'item, comme
+        # dans Asciidoctor PDF : marge et largeur utile décalées le temps
+        # de leur rendu (procédé des panneaux et des Q/R). Les sous-listes
+        # gardent leur `indent`, relatif à la marge d'origine.
         item.blocks.each do |sub_block|
           if sub_block.is_a?(Asciicrystal::List)
             render_list(sub_block, ordered: sub_block.context == :olist, indent: indent + @theme.list_indent)
           elsif sub_block.is_a?(Asciicrystal::AbstractNode)
-            dispatch(sub_block, sub_block.context.to_s)
+            saved_margin = @margin
+            saved_content_w = @content_width
+            @margin += indent + @theme.list_indent
+            @content_width -= indent + @theme.list_indent
+            begin
+              dispatch(sub_block, sub_block.context.to_s)
+            ensure
+              @margin = saved_margin
+              @content_width = saved_content_w
+            end
           end
         end
       end

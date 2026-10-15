@@ -3,6 +3,12 @@
 :toc-title: Versions
 :toclevels: 2
 
+== v2.3.24.113 — 2026-10-15
+
+=== Fixed
+
+* **Blocks attached to a list item** (`+` continuation: source/listing block, paragraph, admonition, table…) were drawn at the page margin instead of under the item text. They are now aligned on the item text, as Asciidoctor PDF does, across page breaks; nested lists keep their own indentation.
+
 == v2.3.24.112 — 2026-09-29
 
 === Security

@@ -34,3 +34,16 @@ Lint/UnusedArgument:
 
 Performance/ChainedCallWithNoBang:
   Enabled: false
+
+# Ameba 1.7 : changer les marqueurs de heredoc modifierait l'interpolation ; désactivé plutôt que converti.
+Style/HeredocEscape:
+  Enabled: false
+
+Style/MultilineStringLiteral:
+  Enabled: false
+
+# Ameba 1.7 : la correction automatique de cette règle change le CONTENU des
+# heredocs dont les lignes sont volontairement décalées (documents AsciiDoc et
+# YAML des specs) — constaté le 16 oct. 2026. Désactivée plutôt qu'appliquée.
+Style/HeredocIndent:
+  Enabled: false

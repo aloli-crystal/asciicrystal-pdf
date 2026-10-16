@@ -38,7 +38,7 @@ ensure
 end
 
 describe "images in safe mode" do
-  %w(secure server safe).each do |mode|
+  %w[secure server safe].each do |mode|
     it "refuses a block image outside the document directory in #{mode} mode" do
       with_tree do |conv, secret|
         images_in(<<-ADOC, conv, mode).should eq(0)

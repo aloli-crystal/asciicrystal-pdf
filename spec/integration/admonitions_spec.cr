@@ -10,10 +10,10 @@ describe "Admonitions" do
   }.each do |kind, label|
     it "renders a #{kind} admonition with its label and body" do
       pdf = IntegrationHelper.convert(<<-ADOC)
-      = Test
+        = Test
 
-      #{kind}: Message de test pour #{kind}.
-      ADOC
+        #{kind}: Message de test pour #{kind}.
+        ADOC
       text = IntegrationHelper.text(pdf)
       text.should contain(label)
       text.should contain("Message")

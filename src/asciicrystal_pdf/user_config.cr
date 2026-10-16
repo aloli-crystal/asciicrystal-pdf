@@ -148,7 +148,7 @@ module AsciicrystalPDF
     # Retourne `nil` si aucun `theme:` n'est déclaré.
     def resolve_theme : Theme?
       name = @theme
-      return nil unless name && !name.empty?
+      return unless name && !name.empty?
 
       # 1. Chemin absolu
       if name.starts_with?('/') || name.starts_with?('~')

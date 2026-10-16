@@ -13,7 +13,7 @@ Add to your `shard.yml`:
 dependencies:
   asciicrystal-pdf:
     github: aloli-crystal/asciicrystal-pdf
-    version: "~> 2.3.24.108"
+    version: "~> 2.3.24.114"
 ----
 
 Run `shards install`.
@@ -31,5 +31,5 @@ ln -s "$PWD/bin/asciicrystal-pdf" ~/bin/
 == Dependencies
 
 * https://github.com/aloli-crystal/asciicrystal[asciicrystal] (~> 2.0) -- AsciiDoc parser
-* https://github.com/aloli-crystal/pdf[pdf] (~> 0.2) -- PDF engine
+* https://github.com/aloli-crystal/pdf[pdf] (~> 1.22) -- PDF engine
 * https://github.com/aloli-crystal/rouge[rouge] (~> 4.7) -- syntax highlighting

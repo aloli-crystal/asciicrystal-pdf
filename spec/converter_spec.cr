@@ -171,40 +171,40 @@ describe AsciicrystalPDF::Converter do
 
   it "should convert a complete document" do
     input = <<-ADOC
-    = Manuel d'utilisation
-    Auteur Exemple <auteur@exemple.com>
-    v1.0, 2024-01-01
-    :toc:
+      = Manuel d'utilisation
+      Auteur Exemple <auteur@exemple.com>
+      v1.0, 2024-01-01
+      :toc:
 
-    == Introduction
+      == Introduction
 
-    Ce document est un exemple complet.
+      Ce document est un exemple complet.
 
-    === Sous-section
+      === Sous-section
 
-    Contenu avec *gras*, _italique_ et `code`.
+      Contenu avec *gras*, _italique_ et `code`.
 
-    == Code
+      == Code
 
-    [source,crystal]
-    ----
-    # Exemple Crystal
-    def hello : String
-      "Bonjour!"
-    end
-    ----
+      [source,crystal]
+      ----
+      # Exemple Crystal
+      def hello : String
+        "Bonjour!"
+      end
+      ----
 
-    == Tableau
+      == Tableau
 
-    |===
-    | Colonne A | Colonne B
+      |===
+      | Colonne A | Colonne B
 
-    | Valeur 1  | Valeur 2
-    | Valeur 3  | Valeur 4
-    |===
+      | Valeur 1  | Valeur 2
+      | Valeur 3  | Valeur 4
+      |===
 
-    NOTE: Fin du document.
-    ADOC
+      NOTE: Fin du document.
+      ADOC
     assert_pdf_generated(input, "complete_document")
   end
 
@@ -218,17 +218,17 @@ describe AsciicrystalPDF::Converter do
     theme.index_enabled = true
 
     input = <<-ADOC
-    = Document avec Index
-    :index:
+      = Document avec Index
+      :index:
 
-    == Chapitre 1
+      == Chapitre 1
 
-    Texte sur Crystal((Crystal)) et sur les langages de programmation((langage de programmation)).
+      Texte sur Crystal((Crystal)) et sur les langages de programmation((langage de programmation)).
 
-    == Chapitre 2
+      == Chapitre 2
 
-    Plus d informations sur Crystal((Crystal)) et sur Ruby((Ruby)).
-    ADOC
+      Plus d informations sur Crystal((Crystal)) et sur Ruby((Ruby)).
+      ADOC
 
     output_path = "#{OUTPUT_DIR}/index_test.pdf"
     doc = Asciicrystal.load(input, options: {"safe" => "safe", "outfile" => output_path})
@@ -261,11 +261,11 @@ describe AsciicrystalPDF::Converter do
     theme.index_columns = 3
 
     input = <<-ADOC
-    = Index multi-colonnes
+      = Index multi-colonnes
 
-    Termes : Alpha((Alpha)), Beta((Beta)), Crystal((Crystal)), Delta((Delta)),
-    Epsilon((Epsilon)), Gamma((Gamma)), Lambda((Lambda)), Omega((Omega)).
-    ADOC
+      Termes : Alpha((Alpha)), Beta((Beta)), Crystal((Crystal)), Delta((Delta)),
+      Epsilon((Epsilon)), Gamma((Gamma)), Lambda((Lambda)), Omega((Omega)).
+      ADOC
 
     output_path = "#{OUTPUT_DIR}/index_multicolumn.pdf"
     doc = Asciicrystal.load(input, options: {"safe" => "safe", "outfile" => output_path})
@@ -401,42 +401,42 @@ describe AsciicrystalPDF::Converter do
 
   it "should convert a full document with TOC and bookmarks" do
     input = <<-ADOC
-    = Guide Complet
-    Auteur Test
-    :toc:
+      = Guide Complet
+      Auteur Test
+      :toc:
 
-    == Introduction
+      == Introduction
 
-    Ceci est l introduction du guide.
+      Ceci est l introduction du guide.
 
-    === Sous-section
+      === Sous-section
 
-    Contenu de la sous-section avec *gras* et _italique_.
+      Contenu de la sous-section avec *gras* et _italique_.
 
-    == Code
+      == Code
 
-    [source,crystal]
-    ----
-    def hello
-      puts "Bonjour"
-    end
-    ----
+      [source,crystal]
+      ----
+      def hello
+        puts "Bonjour"
+      end
+      ----
 
-    == Tableau
+      == Tableau
 
-    |===
-    | A | B
+      |===
+      | A | B
 
-    | 1 | 2
-    | 3 | 4
-    |===
+      | 1 | 2
+      | 3 | 4
+      |===
 
-    NOTE: Note importante.
+      NOTE: Note importante.
 
-    == Conclusion
+      == Conclusion
 
-    Fin du document.
-    ADOC
+      Fin du document.
+      ADOC
     path = convert_to_pdf(input, "full_doc_toc_bookmarks")
     content = String.new(File.read(path).to_slice)
     content.should contain("/Outlines")
@@ -451,16 +451,16 @@ describe AsciicrystalPDF::Converter do
 
   it "should correctly generate PDF with French accented characters" do
     input = <<-ADOC
-    = Spécifications
-    Philippe Nénert
+      = Spécifications
+      Philippe Nénert
 
-    == Présentation
+      == Présentation
 
-    Voici un tiret \u2014 et des accents : é è ê ë à â ù û ç ô î.
+      Voici un tiret \u2014 et des accents : é è ê ë à â ù û ç ô î.
 
-    * Puce avec accents éàü
-    * Deuxième puce
-    ADOC
+      * Puce avec accents éàü
+      * Deuxième puce
+      ADOC
 
     path = convert_to_pdf(input, "french_utf8")
     File.exists?(path).should be_true

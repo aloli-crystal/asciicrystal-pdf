@@ -70,11 +70,11 @@ module IntegrationHelper
     # `@trailer` is a private ivar on Reader; accessing it from a
     # spec is fine in Crystal.
     info_ref = reader.@trailer["Info"]?
-    return nil unless info_ref
+    return unless info_ref
     info = reader.resolve(info_ref).as?(PDF::Objects::Dictionary)
-    return nil unless info
+    return unless info
     title_obj = info["Title"]?
-    return nil unless title_obj
+    return unless title_obj
     resolved = reader.resolve(title_obj)
     raw = resolved.as?(PDF::Objects::Str).try(&.value)
     raw ? decode_pdf_string(raw) : nil
@@ -378,21 +378,17 @@ module IntegrationHelper
 
     if !h.empty? && h.size.divisible_by?(4) && h.size >= 4
       0.step(to: h.size - 4, by: 4) do |k|
-        begin
-          cp = h[k, 4].to_u32(16)
-          buf << cp.chr
-        rescue
-          # ignore invalid codepoints
-        end
+        cp = h[k, 4].to_u32(16)
+        buf << cp.chr
+      rescue
+        # ignore invalid codepoints
       end
     elsif !h.empty? && h.size.divisible_by?(2)
       0.step(to: h.size - 2, by: 2) do |k|
-        begin
-          byte = h[k, 2].to_u8(16)
-          buf << byte.chr
-        rescue
-          # ignore invalid
-        end
+        byte = h[k, 2].to_u8(16)
+        buf << byte.chr
+      rescue
+        # ignore invalid
       end
     end
     i + 1

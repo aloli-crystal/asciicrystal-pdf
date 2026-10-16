@@ -420,7 +420,7 @@ tenir sur 1-2 pages avec une mini-couverture compacte.
 dependencies:
   asciicrystal-pdf:
     github: aloli-crystal/asciicrystal-pdf
-    version: "~> 2.3.24.108"
+    version: "~> 2.3.24.114"
 ----
 . Exécutez `shards install`
 

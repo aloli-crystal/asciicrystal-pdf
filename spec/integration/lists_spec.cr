@@ -57,7 +57,7 @@ describe "Lists" do
       ADOC
     theme = AsciicrystalPDF::Theme.new
     # Fond et cadre : deux rectangles par bloc, regroupés par hauteur.
-    boxes = IntegrationHelper.rectangles(pdf).select { |r| r[2] > 100.0 }.uniq { |r| r[1].round }
+    boxes = IntegrationHelper.rectangles(pdf).select { |r| r[2] > 100.0 }.uniq(&.[1].round)
     boxes.size.should eq(2)
     outside, inside = boxes.sort_by { |r| -r[1] }
     outside[0].should be_close(theme.page_margin, 0.5)

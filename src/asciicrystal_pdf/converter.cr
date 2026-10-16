@@ -1175,7 +1175,7 @@ module AsciicrystalPDF
     # Cherche un rôle `x-score-<niveau>` sur le node et retourne le
     # niveau (string) si trouvé. Niveaux reconnus :
     # `excellent`, `tres-bien`, `bien`, `insuffisant`, `a-revoir`.
-    private X_SCORE_LEVELS = %w(excellent tres-bien bien insuffisant a-revoir)
+    private X_SCORE_LEVELS = %w[excellent tres-bien bien insuffisant a-revoir]
 
     private def detect_x_score_level(node : Asciicrystal::AbstractBlock) : String?
       X_SCORE_LEVELS.each do |level|
@@ -2099,7 +2099,7 @@ module AsciicrystalPDF
     # `in`, ou `%` de la largeur utile. `nil` si absente ou illisible
     # (au lieu de lever une exception sur `"100%".to_f`).
     private def parse_image_length(value : String?) : Float64?
-      return nil unless value
+      return unless value
       v = value.strip.downcase
       if v.ends_with?('%')
         v.rchop.to_f?.try { |n| n * @content_width / 100.0 }
@@ -3733,7 +3733,7 @@ module AsciicrystalPDF
     # échouait silencieusement (`"4cm".to_f?` = nil ⇒ largeur par
     # défaut) et le logo était mal dimensionné.
     private def parse_logo_length(s : String?) : Float64?
-      return nil unless s
+      return unless s
       v = s.strip.downcase
       if v.ends_with?("cm")
         v[0...-2].to_f?.try { |n| n * 28.3464567 }
@@ -3793,7 +3793,7 @@ module AsciicrystalPDF
     # converti en `secure` pouvait incorporer au PDF n'importe quelle
     # image lisible du serveur (`image::/…/secret.png[]`).
     private def resolve_image_path_str(doc : Asciicrystal::Document, target : String) : String?
-      return nil if target.empty? || uri_target?(target)
+      return if target.empty? || uri_target?(target)
       if (jail = image_jail(doc))
         return resolve_jailed_path(target, jail)
       end
@@ -3839,7 +3839,7 @@ module AsciicrystalPDF
       while (parent = doc.parent_document)
         doc = parent
       end
-      return nil if doc.safe < Asciicrystal::SafeMode::SAFE
+      return if doc.safe < Asciicrystal::SafeMode::SAFE
 
       base =
         if doc.base_dir != "."
@@ -4246,7 +4246,7 @@ module AsciicrystalPDF
           # `page.image` traite y comme le HAUT — même offset.
           page.image(img, at: {x, y + display_h}, width: display_w)
         end
-      rescue ex
+      rescue
         # Fallback : texte alt sans formatage particulier.
         draw_text_run(page, seg.text, x, y, @fn_body, font_size)
       end
@@ -4878,11 +4878,11 @@ module AsciicrystalPDF
     private def font_cjk : PDF::Fonts::TrueTypeFont?
       cached = @font_cjk
       return cached if cached
-      return nil if @cjk_load_attempted
+      return if @cjk_load_attempted
       @cjk_load_attempted = true
 
       path = @cjk_font_path
-      return nil unless path && File.exists?(path)
+      return unless path && File.exists?(path)
 
       begin
         ttf = @doc.load_font(path)
@@ -5007,7 +5007,6 @@ module AsciicrystalPDF
       when @fn_mono             then @font_mono
       when @fn_mono_bold        then @font_mono_bold
       when @fn_heading          then @font_body_bold
-      else                           nil
       end
     end
 
@@ -5255,7 +5254,7 @@ module AsciicrystalPDF
       font_size : Float64,
       extra_per_space : Float64,
     ) : Float64?
-      return nil unless native_renderable?(text)
+      return unless native_renderable?(text)
 
       font = get_font(font_name)
       set_font(page, font_name, font_size)

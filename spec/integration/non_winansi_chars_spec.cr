@@ -14,13 +14,13 @@ require "./spec_helper"
 describe "Integration · non-WinAnsi characters" do
   it "renders covered emojis (✅ ❌) as colour SVG (path ops), not as `?`" do
     no_emoji = IntegrationHelper.convert(<<-ADOC)
-    = Test
-    Plain text without any emoji.
-    ADOC
+      = Test
+      Plain text without any emoji.
+      ADOC
     with_emoji = IntegrationHelper.convert(<<-ADOC)
-    = Test emoji
-    Sample with ✅ and ❌ inline.
-    ADOC
+      = Test emoji
+      Sample with ✅ and ❌ inline.
+      ADOC
 
     begin
       File.exists?(with_emoji).should be_true
@@ -54,9 +54,9 @@ describe "Integration · non-WinAnsi characters" do
     # exact ideograph — but it can reliably tell whether a `?`
     # substitution was emitted, which is what this test asserts.
     source = <<-ADOC
-    = Test
-    A CJK character: 日.
-    ADOC
+      = Test
+      A CJK character: 日.
+      ADOC
     path = IntegrationHelper.convert(source)
     begin
       File.exists?(path).should be_true
@@ -75,9 +75,9 @@ describe "Integration · non-WinAnsi characters" do
 
   it "leaves WinAnsi text untouched (no `?` substitution)" do
     source = <<-ADOC
-    = Test
-    Plain ASCII plus accents éàù — €.
-    ADOC
+      = Test
+      Plain ASCII plus accents éàù — €.
+      ADOC
     path = IntegrationHelper.convert(source)
     begin
       text = IntegrationHelper.text(path)

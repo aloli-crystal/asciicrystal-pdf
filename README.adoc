@@ -410,7 +410,7 @@ Typical use cases : quizzes, job descriptions, short notes meant to fit on
 dependencies:
   asciicrystal-pdf:
     github: aloli-crystal/asciicrystal-pdf
-    version: "~> 2.3.24.108"
+    version: "~> 2.3.24.114"
 ----
 . Run `shards install`
 

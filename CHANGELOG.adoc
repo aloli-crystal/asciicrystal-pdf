@@ -3,6 +3,12 @@
 :toc-title: Versions
 :toclevels: 2
 
+== v2.3.24.114 — 2026-10-16
+
+=== Changed
+
+* ameba 1.7 and Crystal 1.22.0 in CI; new rules applied, no behaviour change.
+
 == v2.3.24.113 — 2026-10-15
 
 === Fixed

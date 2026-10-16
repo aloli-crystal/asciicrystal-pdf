@@ -1,3 +1,9 @@
+== v2.3.24.114 — 2026-10-16
+
+=== Modifié
+
+* ameba 1.7 et Crystal 1.22.0 en CI ; nouvelles règles appliquées, aucun changement de comportement.
+
 == v2.3.24.113 — 2026-10-15
 
 === Corrigé

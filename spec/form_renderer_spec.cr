@@ -1,6 +1,6 @@
 require "./spec_helper"
 
-private def field_of(type : String, *, cols : Int32 = 1, rows : Int32? = nil, options : Array(String) | Hash(String, String) | Nil = nil) : AsciicrystalPDF::FormField
+private def field_of(type : String, *, cols : Int32 = 1, rows : Int32? = nil, options : Array(String) | Hash(String, String)? = nil) : AsciicrystalPDF::FormField
   AsciicrystalPDF::FormField.new(
     id: "x",
     type: type,

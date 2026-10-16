@@ -123,7 +123,7 @@ module AsciicrystalPDF
 
     private def self.string_attr(root : YAML::Any, key : String) : String?
       h = root.as_h?
-      return nil unless h
+      return unless h
       v = h[YAML::Any.new(key)]?
       v.try(&.as_s?)
     end
@@ -228,9 +228,9 @@ module AsciicrystalPDF
     # Normalise `options:` en `Array(String) | Hash(String, String)`.
     # Lève une erreur si requis (radio/select/select-multi) et absent
     # ou vide, ou si le type YAML est invalide.
-    private def self.build_options(yaml : YAML::Any?, field_id : String, type : String) : Array(String) | Hash(String, String) | Nil
+    private def self.build_options(yaml : YAML::Any?, field_id : String, type : String) : Array(String) | Hash(String, String)?
       if yaml.nil?
-        return nil unless OPTION_TYPES.includes?(type)
+        return unless OPTION_TYPES.includes?(type)
         raise FormError.new("[x-form] champ '#{field_id}' : `options` requis pour type `#{type}`")
       end
 
@@ -243,7 +243,7 @@ module AsciicrystalPDF
           if OPTION_TYPES.includes?(type)
             raise FormError.new("[x-form] champ '#{field_id}' : `options` ne peut pas être vide")
           end
-          return nil
+          return
         end
         return normalized
       end
@@ -260,7 +260,7 @@ module AsciicrystalPDF
           if OPTION_TYPES.includes?(type)
             raise FormError.new("[x-form] champ '#{field_id}' : `options` ne peut pas être vide")
           end
-          return nil
+          return
         end
         return result
       end
@@ -269,7 +269,7 @@ module AsciicrystalPDF
     end
 
     private def self.build_submit(yaml : YAML::Any?) : Submit?
-      return nil unless yaml
+      return unless yaml
       h = yaml.as_h?
       raise FormError.new("[x-form] `submit:` doit être un objet (hash)") unless h
       label = h[YAML::Any.new("label")]?.try(&.as_s?) || "Envoyer"
@@ -282,7 +282,7 @@ module AsciicrystalPDF
     end
 
     private def self.build_reset(yaml : YAML::Any?) : ResetButton?
-      return nil unless yaml
+      return unless yaml
       h = yaml.as_h?
       raise FormError.new("[x-form] `reset:` doit être un objet (hash)") unless h
       label = h[YAML::Any.new("label")]?.try(&.as_s?) || "Effacer"
@@ -349,7 +349,7 @@ module AsciicrystalPDF
     getter step : YAML::Any?       # number
     getter layout : String?        # radio : vertical|horizontal
     getter validation : YAML::Any? # regex ou hash min/max
-    getter options : Array(String) | Hash(String, String) | Nil
+    getter options : Array(String) | Hash(String, String)?
 
     def initialize(
       @id : String,
@@ -367,7 +367,7 @@ module AsciicrystalPDF
       @step : YAML::Any? = nil,
       @layout : String? = nil,
       @validation : YAML::Any? = nil,
-      @options : Array(String) | Hash(String, String) | Nil = nil,
+      @options : Array(String) | Hash(String, String)? = nil,
     )
     end
 
@@ -395,14 +395,14 @@ module AsciicrystalPDF
     # Valeur par défaut comme chaîne, ou nil si absente.
     def value_string : String?
       v = @value
-      return nil unless v
+      return unless v
       v.as_s? || v.raw.to_s
     end
 
     # Valeur par défaut comme liste de chaînes (pour select-multi).
     def value_array : Array(String)?
       v = @value
-      return nil unless v
+      return unless v
       if arr = v.as_a?
         return arr.map { |item| item.as_s? || item.raw.to_s }
       end

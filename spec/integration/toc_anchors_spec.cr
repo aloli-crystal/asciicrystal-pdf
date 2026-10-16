@@ -6,21 +6,21 @@ require "./spec_helper"
 describe "Integration · TOC anchors" do
   it "registers one /XYZ destination per section (named-dest + outline item)" do
     source = <<-ADOC
-    = Document
-    :toc:
+      = Document
+      :toc:
 
-    == First
+      == First
 
-    Body of first.
+      Body of first.
 
-    == Second
+      == Second
 
-    Body of second.
+      Body of second.
 
-    == Third
+      == Third
 
-    Body of third.
-    ADOC
+      Body of third.
+      ADOC
 
     path = IntegrationHelper.convert(source)
     begin
@@ -37,21 +37,21 @@ describe "Integration · TOC anchors" do
 
   it "emits one /Subtype /Link annotation per TOC entry" do
     source = <<-ADOC
-    = Document
-    :toc:
+      = Document
+      :toc:
 
-    == Alpha
+      == Alpha
 
-    a
+      a
 
-    == Beta
+      == Beta
 
-    b
+      b
 
-    == Gamma
+      == Gamma
 
-    g
-    ADOC
+      g
+      ADOC
 
     path = IntegrationHelper.convert(source)
     begin
@@ -71,12 +71,12 @@ describe "Integration · TOC anchors" do
     # cheap and fuel the outline / bookmarks), but no Link annotations
     # are emitted on body pages.
     source = <<-ADOC
-    = Document
+      = Document
 
-    == Section
+      == Section
 
-    Body.
-    ADOC
+      Body.
+      ADOC
 
     path = IntegrationHelper.convert(source)
     begin
@@ -88,13 +88,13 @@ describe "Integration · TOC anchors" do
 
   it "uses the section's id as the destination name (parser-supplied)" do
     source = <<-ADOC
-    = Document
-    :toc:
+      = Document
+      :toc:
 
-    == Overview
+      == Overview
 
-    Body.
-    ADOC
+      Body.
+      ADOC
 
     path = IntegrationHelper.convert(source)
     begin
@@ -113,19 +113,19 @@ describe "Integration · TOC anchors" do
     # page suivante — la TOC apparaissait « sans titre ». Le doctitle
     # doit désormais coiffer la TOC sur la même première page.
     source = <<-ADOC
-    = Mon Article
-    Jean Dupont
+      = Mon Article
+      Jean Dupont
 
-    :toc:
+      :toc:
 
-    == Section Un
+      == Section Un
 
-    Contenu un.
+      Contenu un.
 
-    == Section Deux
+      == Section Deux
 
-    Contenu deux.
-    ADOC
+      Contenu deux.
+      ADOC
 
     path = IntegrationHelper.convert(source)
     begin

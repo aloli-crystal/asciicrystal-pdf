@@ -13,7 +13,7 @@ Ajoutez a votre `shard.yml` :
 dependencies:
   asciicrystal-pdf:
     github: aloli-crystal/asciicrystal-pdf
-    version: "~> 2.3.24.108"
+    version: "~> 2.3.24.114"
 ----
 
 Executez `shards install`.

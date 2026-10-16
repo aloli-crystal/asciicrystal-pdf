@@ -305,14 +305,14 @@ module AsciicrystalPDF
     # `hyph-fr.tex` → `fr`, `hyph-en-us.tex` → `en-us`,
     # autre chose → `nil`. Publique pour les tests.
     def self.extract_lang_from_filename(name : String) : String?
-      return nil unless name.starts_with?("hyph-") && name.ends_with?(".tex")
+      return unless name.starts_with?("hyph-") && name.ends_with?(".tex")
       name.lchop("hyph-").rchop(".tex")
     end
 
     # Lit le cache disque. Retourne `nil` si absent ou corrompu.
     # Publique pour les tests.
     def self.read_cached_langs : Array(String)?
-      return nil unless File.file?(available_cache_file)
+      return unless File.file?(available_cache_file)
       data = JSON.parse(File.read(available_cache_file))
       data["langs"].as_a.map(&.as_s)
     rescue
@@ -561,8 +561,6 @@ module AsciicrystalPDF
               from_url
             elsif (canonical = entry.try(&.url) || excluded_entry.try(&.url))
               resolve_install_url(canonical)
-            else
-              nil
             end
       unless url
         STDERR.puts "Erreur : pas d'URL pour `#{lang}` (manifest absent et `--from` non fourni)."
